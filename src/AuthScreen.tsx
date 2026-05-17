@@ -37,12 +37,7 @@ export default function AuthScreen({ onEnter }: { onEnter: (user: any) => void }
         setIsForgotPassword(false);
       } else if (isLogin) {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        if (!userCredential.user.emailVerified) {
-          setError('Por favor, confirme seu e-mail antes de entrar.');
-          await auth.signOut();
-        } else {
-          onEnter(userCredential.user);
-        }
+        onEnter(userCredential.user);
       } else {
         if (!isPasswordValid) {
           setError('A senha não atende aos requisitos.');
@@ -50,10 +45,7 @@ export default function AuthScreen({ onEnter }: { onEnter: (user: any) => void }
           return;
         }
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-        await sendEmailVerification(userCredential.user);
-        setMessage('Conta criada! Enviamos um link de confirmação para seu e-mail.');
-        await auth.signOut();
-        setIsLogin(true);
+        onEnter(userCredential.user);
       }
     } catch (err: any) {
       console.error(err);

@@ -69,6 +69,7 @@ function CurrencyInput({ value, onValueChange, ...props }: { value: string | num
 export default function App() {
   const [user, setUser] = useState<any>(null);
   const [showSplash, setShowSplash] = useState(true);
+  const [localName, setLocalName] = useState<string | null>(null);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -76,6 +77,14 @@ export default function App() {
     });
     return () => unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      setLocalName(localStorage.getItem(`templario_name_${user.uid}`));
+    } else {
+      setLocalName(null);
+    }
+  }, [user]);
 
   useEffect(() => {
     // Hide splash screen after 2.5 seconds
@@ -90,7 +99,12 @@ export default function App() {
   }
 
   if (!user) {
-    return <AuthScreen onEnter={setUser} />;
+    return (
+      <>
+         <IOSInstallPrompt />
+         <AuthScreen onEnter={setUser} />
+      </>
+    );
   }
 
   const handleLogout = async () => {
@@ -98,17 +112,59 @@ export default function App() {
     setUser(null);
   };
 
-  const displayName = user.displayName || localStorage.getItem(`templario_name_${user.uid}`);
-
-  if (!displayName) {
+  if (!localName) {
     return <WelcomeScreen onEnter={(name) => {
       localStorage.setItem(`templario_name_${user.uid}`, name);
-      // force re-render by updating state
-      setUser({ ...user, displayName: name });
+      setLocalName(name);
     }} />;
   }
 
-  return <MainApp key={user.uid} userName={user.uid} displayUserName={displayName} onLogout={handleLogout} />;
+  return (
+    <>
+      <IOSInstallPrompt />
+      <MainApp key={user.uid} userName={user.uid} displayUserName={localName} onLogout={handleLogout} />
+    </>
+  );
+}
+
+function IOSInstallPrompt() {
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const isIos = () => {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      return /iphone|ipad|ipod/.test(userAgent);
+    };
+    // Detects if device is in standalone mode
+    const isStandalone = () => ('standalone' in window.navigator) && (window.navigator as any).standalone;
+
+    if (isIos() && !isStandalone()) {
+      setShow(true);
+    }
+  }, []);
+
+  if (!show) return null;
+
+  return (
+    <div className="fixed bottom-0 left-0 w-full p-4 bg-[#801313]/90 text-white shadow-xl z-[9999] backdrop-blur-md border-t border-[#fca311] flex flex-col items-center animate-in slide-in-from-bottom-5">
+      <div className="flex justify-between w-full mb-2">
+        <h3 className="font-bold text-[#fca311]">Instale o App no iOS</h3>
+        <button onClick={() => setShow(false)} className="text-white hover:text-gray-300">
+           <X className="w-5 h-5" />
+        </button>
+      </div>
+      <p className="text-sm text-center mb-2">
+        Para uma melhor experiência (tela cheia e sem barra de navegação):
+      </p>
+      <div className="bg-black/40 rounded p-3 text-xs w-full text-center flex items-center justify-center gap-2">
+        <span>Toque em</span>
+        <svg viewBox="0 0 50 50" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="inline-block bg-white text-blue-500 rounded p-1">
+          <path d="M25 2v24m0-24L15 12m10-10l10 10m5 10v18H10V22" />
+        </svg>
+        <span>(Compartilhar) e depois em <span className="font-bold">"Adicionar à Tela de Início"</span></span>
+      </div>
+    </div>
+  );
 }
 
 function WelcomeScreen({ onEnter }: { onEnter: (name: string) => void }) {
