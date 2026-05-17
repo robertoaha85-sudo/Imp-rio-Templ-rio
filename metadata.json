@@ -1,0 +1,8 @@
+{
+  "name": "Controle Financeiro Templário",
+  "description": "Um painel de controle financeiro pessoal moderno com tema medieval templário.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <!-- Shield Background -->
+  <path d="M256 32 C120 72 64 128 64 256 C64 384 150 448 256 480 C362 448 448 384 448 256 C448 128 392 72 256 32 Z" fill="#f8fafc" stroke="#d4af37" stroke-width="12" />
+  
+  <!-- Templar Cross -->
+  <path d="M256 128 C280 190 322 232 384 256 C322 280 280 322 256 384 C232 322 190 280 128 256 C190 232 232 190 256 128 Z" fill="#8B0000" />
+</svg>
