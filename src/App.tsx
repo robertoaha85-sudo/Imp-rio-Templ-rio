@@ -101,7 +101,7 @@ export default function App() {
   if (!user) {
     return (
       <>
-         <IOSInstallPrompt />
+         <AppInstallPrompt />
          <AuthScreen onEnter={setUser} />
       </>
     );
@@ -121,16 +121,18 @@ export default function App() {
 
   return (
     <>
-      <IOSInstallPrompt />
+      <AppInstallPrompt />
       <MainApp key={user.uid} userName={user.uid} displayUserName={localName} onLogout={handleLogout} />
     </>
   );
 }
 
-function IOSInstallPrompt() {
-  const [show, setShow] = useState(false);
+function AppInstallPrompt() {
+  const [showIos, setShowIos] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
+    // iOS detection
     const isIos = () => {
       const userAgent = window.navigator.userAgent.toLowerCase();
       return /iphone|ipad|ipod/.test(userAgent);
@@ -139,32 +141,88 @@ function IOSInstallPrompt() {
     const isStandalone = () => ('standalone' in window.navigator) && (window.navigator as any).standalone;
 
     if (isIos() && !isStandalone()) {
-      setShow(true);
+      setShowIos(true);
     }
+
+    // Android / Desktop PWA installation prompt
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    
+    // Listen for successful installation
+    window.addEventListener('appinstalled', () => {
+      setDeferredPrompt(null);
+    });
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
   }, []);
 
-  if (!show) return null;
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    }
+  };
 
-  return (
-    <div className="fixed bottom-0 left-0 w-full p-4 bg-[#801313]/90 text-white shadow-xl z-[9999] backdrop-blur-md border-t border-[#fca311] flex flex-col items-center animate-in slide-in-from-bottom-5">
-      <div className="flex justify-between w-full mb-2">
-        <h3 className="font-bold text-[#fca311]">Instale o App no iOS</h3>
-        <button onClick={() => setShow(false)} className="text-white hover:text-gray-300">
-           <X className="w-5 h-5" />
+  if (showIos) {
+    return (
+      <div className="fixed bottom-0 left-0 w-full p-4 bg-[#801313]/90 text-white shadow-xl z-[9999] backdrop-blur-md border-t border-[#fca311] flex flex-col items-center animate-in slide-in-from-bottom-5">
+        <div className="flex justify-between w-full mb-2">
+          <h3 className="font-bold text-[#fca311]">Instale o App no iOS</h3>
+          <button onClick={() => setShowIos(false)} className="text-white hover:text-gray-300">
+             <X className="w-5 h-5" />
+          </button>
+        </div>
+        <p className="text-sm text-center mb-2">
+          Para uma melhor experiência (tela cheia e sem barra de navegação):
+        </p>
+        <div className="bg-black/40 rounded p-3 text-xs w-full text-center flex items-center justify-center gap-2">
+          <span>Toque em</span>
+          <svg viewBox="0 0 50 50" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="inline-block bg-white text-blue-500 rounded p-1">
+            <path d="M25 2v24m0-24L15 12m10-10l10 10m5 10v18H10V22" />
+          </svg>
+          <span>(Compartilhar) e depois em <span className="font-bold">"Adicionar à Tela de Início"</span></span>
+        </div>
+      </div>
+    );
+  }
+
+  if (deferredPrompt) {
+    return (
+      <div className="fixed bottom-0 left-0 w-full p-4 bg-[#801313]/90 text-white shadow-xl z-[9999] backdrop-blur-md border-t border-[#fca311] flex flex-col items-center animate-in slide-in-from-bottom-5">
+        <div className="flex justify-between w-full mb-2">
+          <h3 className="font-bold text-[#fca311]">Instale o App</h3>
+          <button onClick={() => setDeferredPrompt(null)} className="text-white hover:text-gray-300">
+             <X className="w-5 h-5" />
+          </button>
+        </div>
+        <p className="text-sm text-center mb-4 text-gray-200 font-medium">
+          Para ter uma experiência imersiva (tela cheia e atalho direto), instale nosso aplicativo.
+        </p>
+        <button 
+          onClick={handleInstallClick}
+          className="bg-[#fca311] hover:bg-[#e08e0b] text-black font-bold py-2 px-6 rounded-xl transition shadow-lg w-full max-w-sm flex items-center justify-center gap-2"
+        >
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+             <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+             <polyline points="7 10 12 15 17 10"></polyline>
+             <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          Instalar Agora
         </button>
       </div>
-      <p className="text-sm text-center mb-2">
-        Para uma melhor experiência (tela cheia e sem barra de navegação):
-      </p>
-      <div className="bg-black/40 rounded p-3 text-xs w-full text-center flex items-center justify-center gap-2">
-        <span>Toque em</span>
-        <svg viewBox="0 0 50 50" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="inline-block bg-white text-blue-500 rounded p-1">
-          <path d="M25 2v24m0-24L15 12m10-10l10 10m5 10v18H10V22" />
-        </svg>
-        <span>(Compartilhar) e depois em <span className="font-bold">"Adicionar à Tela de Início"</span></span>
-      </div>
-    </div>
-  );
+    );
+  }
+
+  return null;
 }
 
 function WelcomeScreen({ onEnter }: { onEnter: (name: string) => void }) {
