@@ -98,9 +98,67 @@ export default function App() {
     setUser(null);
   };
 
-  const displayName = user.displayName || user.email?.split('@')[0] || 'Cavaleiro';
+  const displayName = user.displayName || localStorage.getItem(`templario_name_${user.uid}`);
+
+  if (!displayName) {
+    return <WelcomeScreen onEnter={(name) => {
+      localStorage.setItem(`templario_name_${user.uid}`, name);
+      // force re-render by updating state
+      setUser({ ...user, displayName: name });
+    }} />;
+  }
 
   return <MainApp key={user.uid} userName={user.uid} displayUserName={displayName} onLogout={handleLogout} />;
+}
+
+function WelcomeScreen({ onEnter }: { onEnter: (name: string) => void }) {
+  const [name, setName] = useState('');
+
+  return (
+    <div className="flex h-screen w-full bg-black relative items-center justify-center overflow-hidden font-sans text-slate-800">
+      <div 
+        className="absolute inset-0 bg-cover bg-[center_top_20%] md:bg-center opacity-70 z-0 animate-in fade-in duration-1000"
+        style={{ backgroundImage: 'url(https://i.imgur.com/I0zPau9.jpeg)' }}
+      />
+      <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-black/20 z-10" />
+      
+      <div className="relative z-20 w-full max-w-md p-8 md:p-10 mx-4 rounded-3xl bg-black/40 backdrop-blur-xl border border-white/20 shadow-2xl animate-in slide-in-from-bottom-8 fade-in duration-1000 flex flex-col items-center text-center">
+        <Castle className="w-16 h-16 text-[#fca311] mb-6 drop-shadow-md" />
+        <h1 className="text-3xl md:text-4xl font-serif text-white mb-2 drop-shadow-lg">Templário</h1>
+        <p className="text-red-300 uppercase tracking-widest text-xs md:text-sm mb-8 drop-shadow-md font-bold">Gestão Financeira</p>
+
+        <p className="text-gray-200 font-medium mb-10 text-base md:text-lg">Adentre o reino do controle financeiro e construa seu império.</p>
+
+        <form 
+          className="w-full space-y-6 text-left"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (name.trim()) onEnter(name.trim());
+          }}
+        >
+          <div className="space-y-3">
+             <label className="block text-sm md:text-base font-bold text-white/90 text-center">Digite seu nome, Nobre Cavaleiro</label>
+             <input 
+               type="text" 
+               required
+               value={name}
+               onChange={(e) => setName(e.target.value)}
+               placeholder="Cavaleiro..."
+               className="w-full bg-white/10 border border-white/30 rounded-xl px-4 py-4 text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#fca311] focus:border-transparent transition text-center text-lg md:text-xl font-bold backdrop-blur-sm"
+             />
+          </div>
+
+          <button 
+            type="submit"
+            className="w-full bg-[#8B0000] hover:bg-[#660000] text-white py-4 rounded-xl font-bold uppercase tracking-wider transition-all shadow-xl hover:shadow-red-900/50 flex justify-center items-center gap-3 text-sm md:text-base"
+          >
+            <Shield className="w-5 h-5" />
+            Entrar no Reino
+          </button>
+        </form>
+      </div>
+    </div>
+  );
 }
 
 function SplashScreen() {
